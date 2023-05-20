@@ -23,7 +23,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
+import com.jobBoard.spring.security.login.external.JobSeekerDetails;
 import com.jobBoard.spring.security.login.models.ERole;
 import com.jobBoard.spring.security.login.models.Role;
 import com.jobBoard.spring.security.login.models.User;
@@ -52,6 +54,9 @@ public class AuthController {
 
   @Autowired
   PasswordEncoder encoder;
+  
+  @Autowired
+  RestTemplate restTemplate;
 
   @Autowired
   JwtUtils jwtUtils;
@@ -81,6 +86,8 @@ public class AuthController {
                                    userDetails.getEmail(),
                                    roles));
   }
+  
+  
 
   @PostMapping("/signup")
   public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
@@ -129,6 +136,15 @@ public class AuthController {
 
     user.setRoles(roles);
     userRepository.save(user);
+    
+    JobSeekerDetails jobSeekerDetails=JobSeekerDetails.builder()
+    	.userName(user.getUsername()).jobSeekerId(user.getId()).build();
+    
+    	
+    		
+    
+    //restTemplate.postForObject("http://JOBSEEKERSERVICE/jobseeker/updateprofile", jobSeekerDetails,JobSeekerDetails.class);
+    restTemplate.put("http://JOBSEEKERSERVICE/jobseeker/updateprofile", jobSeekerDetails);
 
     return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
   }
