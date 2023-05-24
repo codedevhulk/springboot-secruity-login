@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import com.jobBoard.spring.security.login.external.JobSeekerDetails;
+import com.jobBoard.spring.security.login.external.RecruiterDetails;
 import com.jobBoard.spring.security.login.models.ERole;
 import com.jobBoard.spring.security.login.models.Role;
 import com.jobBoard.spring.security.login.models.User;
@@ -38,9 +39,13 @@ import com.jobBoard.spring.security.login.repository.UserRepository;
 import com.jobBoard.spring.security.login.security.jwt.JwtUtils;
 import com.jobBoard.spring.security.login.security.services.UserDetailsImpl;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+import lombok.extern.slf4j.Slf4j;
+
+//@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin
 @RestController
 @RequestMapping("/api/auth")
+@Slf4j
 
 public class AuthController {
   @Autowired
@@ -61,6 +66,12 @@ public class AuthController {
   @Autowired
   JwtUtils jwtUtils;
 
+  
+  
+  // For Jobseeker signup and signin functionality
+  
+  
+  
   @PostMapping("/signin")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -155,4 +166,131 @@ public class AuthController {
     return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
         .body(new MessageResponse("You've been signed out!"));
   }
+  
+  
+  
+  
+  //////////////// For recruiter signup and signin ////////////////////////////
+  
+  
+  
+  
+  
+  @PostMapping("/recruiter/signup")
+  public ResponseEntity<?> registerRecruiter(@Valid @RequestBody SignupRequest signUpRequest) {
+	  
+	  log.info(signUpRequest.toString());
+	  
+    if (userRepository.existsByUsername(signUpRequest.getUsername())) {
+      return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
+    }
+
+    if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+      return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
+    }
+
+    // Create new user's account
+    User user = new User(signUpRequest.getUsername(),
+                         signUpRequest.getEmail(),
+                         encoder.encode(signUpRequest.getPassword()));
+
+    Set<String> strRoles = signUpRequest.getRole();
+    Set<Role> roles = new HashSet<>();
+
+    if (strRoles == null) {
+      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+          .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+      roles.add(userRole);
+    } else {
+      strRoles.forEach(role -> {
+        switch (role) {
+        case "admin":
+          Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+              .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+          roles.add(adminRole);
+
+          break;
+        case "mod":
+          Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+              .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+          roles.add(modRole);
+
+          break;
+        default:
+          Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+              .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+          roles.add(userRole);
+        }
+      });
+    }
+
+    user.setRoles(roles);
+    userRepository.save(user);
+    
+    RecruiterDetails recruiterDetails=RecruiterDetails.builder()
+    	.userName(user.getUsername())
+    	.recruiterId(user.getId())
+    	.build();
+    
+    	
+    		
+    
+    //restTemplate.postForObject("http://JOBSEEKERSERVICE/jobseeker/updateprofile", jobSeekerDetails,JobSeekerDetails.class);
+    restTemplate.put("http://RECRUITERSERVICE/recruiter/updateprofile", recruiterDetails);
+
+    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+  }
+  
+  
+  
+  
+  
+  @PostMapping("/recruiter/signin")
+  public ResponseEntity<?> authenticateRecruiter(@Valid @RequestBody LoginRequest loginRequest) {
+
+    Authentication authentication = authenticationManager
+        .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+    ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+
+    jwtUtils.generateTokenFromUsername("Rajesh");
+    
+    
+    List<String> roles = userDetails.getAuthorities().stream()
+        .map(item -> item.getAuthority())
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+        .body(new UserInfoResponse(userDetails.getId(),
+                                   userDetails.getUsername(),
+                                   userDetails.getEmail(),
+                                   roles));
+  }
+  
+  
+  
+  
+  @PostMapping("/recruiter/signout")
+  public ResponseEntity<?> logoutRecruiter() {
+    ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
+    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
+        .body(new MessageResponse("You've been signed out!"));
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 }
