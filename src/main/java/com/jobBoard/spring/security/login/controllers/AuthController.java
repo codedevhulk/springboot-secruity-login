@@ -124,7 +124,7 @@ public class AuthController {
     Set<Role> roles = new HashSet<>();
 
     if (strRoles == null) {
-      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+      Role userRole = roleRepository.findByName(ERole.ROLE_JOBSEEKER)
           .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
       roles.add(userRole);
     } else {
@@ -143,7 +143,7 @@ public class AuthController {
 
           break;
         default:
-          Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+          Role userRole = roleRepository.findByName(ERole.ROLE_JOBSEEKER)
               .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
           roles.add(userRole);
         }
@@ -154,6 +154,7 @@ public class AuthController {
     userRepository.save(user);
     
     JobSeekerDetails jobSeekerDetails=JobSeekerDetails.builder()
+    		.email(user.getEmail())
     	.userName(user.getUsername()).jobSeekerId(user.getId()).build();
     
     	
@@ -203,7 +204,7 @@ public class AuthController {
     Set<Role> roles = new HashSet<>();
 
     if (strRoles == null) {
-      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+      Role userRole = roleRepository.findByName(ERole.ROLE_RECRUITER)
           .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
       roles.add(userRole);
     } else {
@@ -222,7 +223,7 @@ public class AuthController {
 
           break;
         default:
-          Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+          Role userRole = roleRepository.findByName(ERole.ROLE_RECRUITER)
               .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
           roles.add(userRole);
         }
@@ -234,6 +235,7 @@ public class AuthController {
     
     RecruiterDetails recruiterDetails=RecruiterDetails.builder()
     	.userName(user.getUsername())
+    	.email(user.getEmail())
     	.recruiterId(user.getId())
     	.build();
     
