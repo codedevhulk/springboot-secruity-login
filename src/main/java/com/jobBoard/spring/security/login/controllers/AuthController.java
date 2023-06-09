@@ -11,6 +11,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +34,8 @@ import com.jobBoard.spring.security.login.models.User;
 import com.jobBoard.spring.security.login.payload.request.LoginRequest;
 import com.jobBoard.spring.security.login.payload.request.SignupRequest;
 import com.jobBoard.spring.security.login.payload.response.MessageResponse;
+import com.jobBoard.spring.security.login.payload.response.RecruiterSignupResponse;
+import com.jobBoard.spring.security.login.payload.response.JobseekerSignupResponse;
 import com.jobBoard.spring.security.login.payload.response.UserInfoResponse;
 import com.jobBoard.spring.security.login.repository.RoleRepository;
 import com.jobBoard.spring.security.login.repository.UserRepository;
@@ -158,12 +161,18 @@ public class AuthController {
     	.userName(user.getUsername()).jobSeekerId(user.getId()).build();
     
     	
+    
+    
+    JobseekerSignupResponse signupresponse=new JobseekerSignupResponse(user.getId(),"User registered successfully!");
+    
     		
     
     //restTemplate.postForObject("http://JOBSEEKERSERVICE/jobseeker/updateprofile", jobSeekerDetails,JobSeekerDetails.class);
     restTemplate.put("http://JOBSEEKERSERVICE/jobseeker/updateprofile", jobSeekerDetails);
 
-    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+   // return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    //return signupresponse;
+    return new ResponseEntity<>(signupresponse,HttpStatus.OK);
   }
 
   @PostMapping("/signout")
@@ -239,13 +248,14 @@ public class AuthController {
     	.recruiterId(user.getId())
     	.build();
     
-    	
+    	RecruiterSignupResponse recruiterSignupResponse=new RecruiterSignupResponse(user.getId(),"User registered successfully!");
     		
     
     //restTemplate.postForObject("http://JOBSEEKERSERVICE/jobseeker/updateprofile", jobSeekerDetails,JobSeekerDetails.class);
     restTemplate.put("http://RECRUITERSERVICE/recruiter/updateprofile", recruiterDetails);
 
-    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    //return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    return new ResponseEntity<>(recruiterSignupResponse,HttpStatus.OK);
   }
   
   
