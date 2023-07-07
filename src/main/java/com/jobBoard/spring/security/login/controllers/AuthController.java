@@ -21,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -259,6 +260,14 @@ public class AuthController {
   }
   
   
+  
+  // To delete all the data 
+  @DeleteMapping("/deleteall")
+  public ResponseEntity<String> deleteUserData(){
+	  userRepository.deleteAll();
+	  return new ResponseEntity<>("User's Information deleted",HttpStatus.OK);
+	  
+  }
   
   
   
